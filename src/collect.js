@@ -1,6 +1,6 @@
 // Gathers everything from GitHub. Pure data in, pure data out: no files, no rendering.
 
-import { BRANCH_COMMITS, CALENDAR, COMMIT_CREDIT, MERGED_PRS, MORE_COMMITS, REPOS, VIEWER } from './github.js';
+import { BRANCH_COMMITS, CALENDAR, MERGED_PRS, MORE_COMMITS, REPOS, VIEWER } from './github.js';
 import { createIdentity } from './identity.js';
 
 // accounts: [{ label, login, graphql?, listEmails? }] where graphql and listEmails are built from that
@@ -40,31 +40,14 @@ export async function collect({ accounts, from, to, selfReportedEmails = [], log
     calendars.push({ label: account.label, proven: Boolean(account.graphql), days });
   }
 
-  // The commits GitHub credits each proven account: the like-for-like baseline for the reveal.
-  // Only proven accounts, because GitHub hides the dates of private commits from anyone else.
-  const githubCommits = [];
-  for (const account of proven) {
-    const days = {};
-    for (const [start, end] of months(from, to)) {
-      const data = await account.graphql(COMMIT_CREDIT, { login: account.login, from: `${start}T00:00:00Z`, to: `${end}T23:59:59Z` });
-      for (const repo of data.user.contributionsCollection.commitContributionsByRepository) {
-        for (const { occurredAt, commitCount } of repo.contributions.nodes) {
-          const date = occurredAt.slice(0, 10);
-          days[date] = (days[date] ?? 0) + commitCount;
-        }
-      }
-    }
-    githubCommits.push({ label: account.label, days });
-  }
-
   const classify = createIdentity({ accounts: proven, selfReportedEmails });
   const since = `${from}T00:00:00Z`;
   const commits = new Map(); // oid -> { oid, repo, repoCreatedAt, authoredDate, committedDate, ..., kind }
   const seenRepos = new Set();
 
   // An account with scanRepos: false (for example a work account whose employer restricts tools)
-  // is still proven and still contributes GitHub's own commit credit, but its repositories are
-  // never listed or read.
+  // is still proven and its GitHub calendar still counts, but its repositories are never listed or
+  // read.
   for (const account of proven.filter((a) => a.scanRepos !== false)) {
     const repos = [];
     for (let cursor = null, more = true; more; ) {
@@ -99,20 +82,7 @@ export async function collect({ accounts, from, to, selfReportedEmails = [], log
     mergedPrs += data.search.issueCount;
   }
 
-  return { calendars, githubCommits, commits: [...commits.values()], repoCount: seenRepos.size, mergedPrs };
-}
-
-// [from, to] split into calendar months, clipped to the range.
-export function months(from, to) {
-  const out = [];
-  let cursor = from;
-  while (cursor <= to) {
-    const [y, m] = cursor.split('-').map(Number);
-    const last = new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
-    out.push([cursor, last < to ? last : to]);
-    cursor = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
-  }
-  return out;
+  return { calendars, commits: [...commits.values()], repoCount: seenRepos.size, mergedPrs };
 }
 
 // Walks every branch. Branches share most of their history, so once a full page of a branch is

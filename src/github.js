@@ -53,13 +53,6 @@ export const CALENDAR = `query($login: String!, $from: DateTime!, $to: DateTime!
   user(login: $login) { contributionsCollection(from: $from, to: $to) {
     contributionCalendar { weeks { contributionDays { date contributionCount } } } } } }`;
 
-// Commits GitHub itself credits to an account, per repository per day. Asked one month at a time so
-// each repository has at most 31 day entries and no pagination is needed.
-export const COMMIT_CREDIT = `query($login: String!, $from: DateTime!, $to: DateTime!) {
-  user(login: $login) { contributionsCollection(from: $from, to: $to) {
-    commitContributionsByRepository(maxRepositories: 100) {
-      contributions(first: 100) { nodes { occurredAt commitCount } } } } } }`;
-
 export const REPOS = `query($cursor: String) { viewer { repositories(first: 100, after: $cursor,
   orderBy: { field: PUSHED_AT, direction: DESC },
   affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER],

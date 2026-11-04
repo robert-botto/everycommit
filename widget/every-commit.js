@@ -31,6 +31,8 @@ button.replay { margin-left: auto; }
   border-top: 1px solid var(--ec-line); font-size: .8rem; color: var(--ec-muted); }
 .seal { display: inline-flex; align-items: center; gap: .4rem; border: 1px dashed currentColor; border-radius: 999px; padding: .25rem .65rem; color: inherit; text-decoration: none; }
 .seal i { width: .5rem; height: .5rem; border-radius: 50%; background: #c58a00; }
+.seal b { font-weight: 600; color: var(--ec-text); }
+.seal .sig::before { content: '\00b7'; margin-right: .4rem; }
 .seal.signed { border-style: solid; color: var(--ec-text); }
 .seal.signed i { background: #1f9d55; }
 .tip { position: fixed; pointer-events: none; background: var(--ec-text); color: var(--ec-bg); font-size: .78rem; padding: .5rem .65rem;
@@ -73,18 +75,16 @@ class EveryCommit extends HTMLElement {
 
   render(doc) {
     const root = this.shadowRoot;
-    // Compare commits with commits: GitHub's per-account commit credit, not its calendar, which also
-    // counts issues, reviews and pull requests.
-    const proven = doc.series.githubCommits;
+    const proven = doc.series.githubCalendars.filter((c) => c.proven);
     const days = doc.series.verifiedCommits.length;
     const add = (lists) => Array.from({ length: days }, (_, i) => lists.reduce((total, cells) => total + cells[i], 0));
     this.stages = [
-      { name: 'What GitHub credits', cells: proven[0]?.cells ?? new Array(days).fill(0),
-        caption: 'Commits GitHub credits to one profile.' },
+      { name: 'What GitHub shows', cells: proven[0]?.cells ?? new Array(days).fill(0),
+        caption: 'What one GitHub profile shows a visitor.' },
       { name: 'Every account', cells: add(proven.map((c) => c.cells)),
-        caption: `Commits GitHub credits across ${proven.length} accounts. GitHub never combines them.` },
-      { name: 'Every commit', cells: doc.series.commits,
-        caption: 'Every branch, every account, deduplicated. Everything added beyond GitHub is verified and filtered for faked commits.' },
+        caption: `All ${proven.length} accounts together. GitHub never combines them.` },
+      { name: 'Every commit', cells: doc.series.contributions,
+        caption: 'Plus every verified commit GitHub missed: all branches, deduplicated, filtered for faked commits.' },
     ];
     if (proven.length < 2) this.stages.splice(1, 1);
     this.totals = this.stages.map((s) => sum(s.cells));
@@ -104,7 +104,7 @@ class EveryCommit extends HTMLElement {
       <p class="caption"></p>
       <div class="wrap"><div class="grid" role="img" aria-label="Contribution calendar"></div></div>
       <div class="steps"></div>
-      <div class="foot"><span class="meta"></span><a class="seal" target="_blank" rel="noopener"><i></i><span>Not signed</span></a></div>
+      <div class="foot"><span class="meta"></span><a class="seal" target="_blank" rel="noopener"><i></i><b>&#10003; Verified emails</b><span class="sig">Unsigned</span></a></div>
       <div class="tip"></div></div>`;
     const grid = root.querySelector('.grid');
     const start = new Date(`${doc.from}T12:00:00Z`);
@@ -127,8 +127,7 @@ class EveryCommit extends HTMLElement {
     steps.append(replay);
 
     const t = doc.totals;
-    root.querySelector('.meta').textContent = `Updated ${doc.to} · ${fmt(t.mergedPullRequests)} merged pull requests` +
-      (t.selfReportedCommits ? ` · ${fmt(t.selfReportedCommits)} more self-reported, not verified` : '');
+    root.querySelector('.meta').textContent = `Updated ${doc.to} · ${fmt(t.mergedPullRequests)} merged pull requests`;
 
     this.bindTooltip(grid, start);
     this.timers = [];
@@ -218,10 +217,11 @@ class EveryCommit extends HTMLElement {
       const body = response.ok ? await response.json() : null;
       if (body?.attestations?.length) {
         seal.classList.add('signed');
-        seal.querySelector('span').textContent = 'Signed by everycommit';
+        seal.querySelector('b').textContent = '\u2713 Verified';
+        seal.querySelector('.sig').textContent = 'Signed';
       }
     } catch {
-      // Offline or rate limited: leave the badge as "Not signed" rather than claim anything.
+      // Offline or rate limited: leave the badge as "Unsigned" rather than claim anything.
     }
   }
 }

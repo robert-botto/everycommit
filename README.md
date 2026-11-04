@@ -64,10 +64,9 @@ What signing cannot prove: that the work was good. A determined person can still
 
 ### Verified versus self-reported
 
-- **The headline (commits)**: per day, the higher of what GitHub already credits across your proven accounts and what everycommit verified. It never shows less than GitHub, and everything it adds on top of GitHub is verified and filtered.
+- **The headline (contributions)**: per day, the higher of what GitHub's calendars show across your proven accounts and what everycommit verified. It never shows less than GitHub, and everything it adds on top is verified commits that passed every filter. It says contributions because GitHub's calendars also count pull requests, reviews and issues.
 - **Verified commits**: linked by GitHub to an account you proved, under an email verified on that account, and passed every filter. Kept in the output as the strict count.
-- **GitHub commit credit**: the commits GitHub itself credits each proven account, per day. The reveal starts here, so it compares commits with commits.
-- **GitHub calendars**: GitHub's full per-account calendars, kept for reference. They also count issues, reviews and pull requests.
+- **GitHub calendars**: what each proven account's profile shows a visitor, per day. The reveal starts here. (GitHub's per-type commit counts can't be used instead: it reports most private work only as an undated total.)
 - **Self-reported**: commits under an email GitHub does not link to your account or that the account has not verified, and any frozen record you supply (for example commits that were never pushed). Shown separately, never added to the verified total. To move commits into verified, add their email to the right GitHub account and verify it.
 
 ## Quick start (local)
@@ -119,7 +118,7 @@ npx everycommit verify activity.json --repo <you>/activity
 }
 ```
 
-- `scanRepos: false` on an account proves you own it and uses the commits GitHub credits to it, without listing or reading its repositories. Useful for a work account whose employer restricts third-party tools.
+- `scanRepos: false` on an account proves you own it and counts its GitHub calendar, without listing or reading its repositories. Useful for a work account whose employer restricts third-party tools.
 - `label` is what viewers see. Logins, repository names and emails are never published.
 - The first account with a token is the "main profile" the reveal starts from.
 - `from` defaults to January 1 of the current year, `to` to today, both in `timeZone`.
@@ -127,7 +126,7 @@ npx everycommit verify activity.json --repo <you>/activity
 
 ## Output
 
-`activity.json` (schema `everycommit/activity@1`): the date range, time zone and policy; daily series for the headline commits, verified commits, self-reported commits, and each account's GitHub commit credit and calendar; totals; and how many commits each filter excluded.
+`activity.json` (schema `everycommit/activity@1`): the date range, time zone and policy; daily series for the headline contributions, verified commits, self-reported commits and each account's GitHub calendar; totals; and how many commits each filter excluded.
 
 ## Signing
 
