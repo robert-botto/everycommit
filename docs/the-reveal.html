@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Reveal: prototype</title>
+<style>
+  :root {
+    --plate: #e9eae6; --cap: #f7f7f4; --graphite: #1e2023; --grey: #5f646b;
+    --line: #d3d5cf; --signal: #2f5bff; --skirt: #c9cbc5;
+    --l0: #dfe0db; --l1: #c3cdf5; --l2: #8ea4f7; --l3: #5a7bfa; --l4: #2f5bff;
+    --font: 'Archivo', 'Helvetica Neue', system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --plate: #16181b; --cap: #212429; --graphite: #ecedea; --grey: #a0a6ae;
+      --line: #2e3238; --signal: #7d97ff; --skirt: #0e0f11;
+      --l0: #262a30; --l1: #2c3a6b; --l2: #3d55b0; --l3: #5f7cf0; --l4: #9db0ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--plate); color: var(--graphite); font-family: var(--font);
+    min-height: 100vh; display: grid; place-items: center; padding: 3rem 1.25rem; }
+  .card { width: min(100%, 64rem); background: var(--cap); border-radius: 14px;
+    box-shadow: 0 1px 0 var(--skirt), 0 10px 30px -18px rgba(0,0,0,.35); padding: clamp(1.25rem, 3vw, 2.25rem); }
+  .eyebrow { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--grey); margin: 0 0 .9rem; }
+  .headline { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin: 0; }
+  .count { font-size: clamp(3rem, 9vw, 5.5rem); font-weight: 800; letter-spacing: -.03em; line-height: 1;
+    font-variant-numeric: tabular-nums; font-stretch: 75%; }
+  .delta { font-size: 1.05rem; font-weight: 700; color: var(--signal); opacity: 0; transform: translateY(6px);
+    transition: opacity .5s, transform .5s; font-variant-numeric: tabular-nums; }
+  .delta.on { opacity: 1; transform: none; }
+  .caption { margin: .6rem 0 1.6rem; color: var(--grey); font-size: 1rem; min-height: 1.5em; }
+  .grid-wrap { overflow-x: auto; padding-bottom: .4rem; }
+  .grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, var(--s));
+    grid-auto-columns: var(--s); gap: 3px; --s: clamp(9px, 1.45vw, 14px); width: max-content; }
+  .cell { width: var(--s); height: var(--s); border-radius: 3px; background: var(--l0); position: relative;
+    transition: background-color .55s ease, box-shadow .55s ease; }
+  .cell.pad { visibility: hidden; }
+  .cell.lit { box-shadow: 0 0 0 1.5px var(--signal), 0 0 10px 1px color-mix(in srgb, var(--signal) 55%, transparent); }
+  .steps { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1.6rem; }
+  .step { font: inherit; font-size: .9rem; font-weight: 600; border: 1px solid var(--line); background: var(--plate);
+    color: var(--graphite); border-radius: 5px; padding: .55rem .85rem; cursor: pointer;
+    box-shadow: 0 2px 0 var(--skirt); transition: transform .1s, box-shadow .1s; }
+  .step:active { transform: translateY(2px); box-shadow: 0 0 0 var(--skirt); }
+  .step[aria-pressed="true"] { background: var(--graphite); color: var(--cap); border-color: var(--graphite); }
+  .step.play { margin-left: auto; }
+  .legend { display: flex; gap: 1.1rem; flex-wrap: wrap; margin-top: 1.2rem; font-size: .85rem; color: var(--grey); }
+  .legend b { color: var(--graphite); font-variant-numeric: tabular-nums; }
+  .legend span { opacity: .35; transition: opacity .4s; }
+  .legend span.on { opacity: 1; }
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+    margin-top: 1.6rem; padding-top: 1.1rem; border-top: 1px solid var(--line); font-size: .82rem; color: var(--grey); }
+  .seal { display: inline-flex; align-items: center; gap: .45rem; border: 1px dashed var(--grey); border-radius: 999px; padding: .3rem .7rem; }
+  .seal i { width: .55rem; height: .55rem; border-radius: 50%; background: #c58a00; display: inline-block; }
+  .tip { position: fixed; pointer-events: none; background: var(--graphite); color: var(--cap); font-size: .8rem;
+    padding: .55rem .7rem; border-radius: 6px; line-height: 1.45; opacity: 0; transition: opacity .12s; z-index: 9;
+    font-variant-numeric: tabular-nums; max-width: 18rem; }
+  .tip.on { opacity: 1; }
+  .tip strong { display: block; margin-bottom: .15rem; }
+  @media (prefers-reduced-motion: reduce) { .cell, .delta, .legend span { transition: none; } }
+</style>
+</head>
+<body>
+<main class="card">
+  <p class="eyebrow" id="eyebrow">2026 activity</p>
+  <h1 class="headline"><span class="count" id="count" aria-live="polite">0</span><span class="delta" id="delta"></span></h1>
+  <p class="caption" id="caption"></p>
+  <div class="grid-wrap"><div class="grid" id="grid" role="img" aria-label="Contribution calendar"></div></div>
+  <div class="steps" id="steps"></div>
+  <div class="legend" id="legend"></div>
+  <div class="foot">
+    <span id="meta"></span>
+    <span class="seal" title="The production version links to a signed attestation here"><i></i> Unsigned prototype</span>
+  </div>
+</main>
+<div class="tip" id="tip"></div>
+<script>
+const DATA = __DATA__;
+
+const STAGES = [
+  { name: 'What GitHub shows', layers: 1,
+    caption: 'This is what one GitHub profile shows a visitor.' },
+  { name: 'Every account', layers: DATA.layers.length - 1,
+    caption: 'Adding the other accounts. GitHub never combines them.' },
+  { name: 'Every commit', layers: DATA.layers.length,
+    caption: 'Adding commits GitHub never counted: feature branches and squash merges, deduplicated by SHA.' },
+];
+
+const fmt = (n) => n.toLocaleString('en-US');
+const days = DATA.true.length;
+const startDate = new Date(DATA.start + 'T12:00:00');
+const visibleAt = (stage) => {
+  const out = new Array(days).fill(0);
+  for (let l = 0; l < STAGES[stage].layers; l++) DATA.layers[l].cells.forEach((v, i) => { out[i] += v; });
+  return out;
+};
+const totals = STAGES.map((_, s) => visibleAt(s).reduce((a, b) => a + b, 0));
+
+// Intensity thresholds from the true distribution, so every stage uses the same scale.
+const nonzero = DATA.true.filter((v) => v > 0).sort((a, b) => a - b);
+const q = (p) => nonzero[Math.min(nonzero.length - 1, Math.floor(p * nonzero.length))];
+const cuts = [q(0.25), q(0.5), q(0.8)];
+const level = (v) => (v === 0 ? 0 : v <= cuts[0] ? 1 : v <= cuts[1] ? 2 : v <= cuts[2] ? 3 : 4);
+
+// Build the grid: weeks as columns, Sunday on top, padded before Jan 1.
+const grid = document.getElementById('grid');
+const pad = startDate.getDay();
+for (let i = 0; i < pad; i++) { const c = document.createElement('div'); c.className = 'cell pad'; grid.append(c); }
+const cells = [];
+for (let i = 0; i < days; i++) {
+  const c = document.createElement('div');
+  c.className = 'cell'; c.dataset.i = i; grid.append(c); cells.push(c);
+}
+
+const legend = document.getElementById('legend');
+DATA.layers.forEach((layer) => {
+  const s = document.createElement('span');
+  s.innerHTML = `${layer.label} <b>${fmt(layer.cells.reduce((a, b) => a + b, 0))}</b>`;
+  legend.append(s);
+});
+
+const stepsEl = document.getElementById('steps');
+STAGES.forEach((stage, s) => {
+  const b = document.createElement('button');
+  b.className = 'step'; b.textContent = `${s + 1}. ${stage.name}`;
+  b.addEventListener('click', () => { stopAuto(); show(s); });
+  stepsEl.append(b);
+});
+const play = document.createElement('button');
+play.className = 'step play'; play.textContent = 'Replay reveal';
+play.addEventListener('click', () => runReveal());
+stepsEl.append(play);
+
+document.getElementById('meta').textContent =
+  `Updated ${DATA.updated} · ${fmt(DATA.mergedPrs)} merged pull requests`;
+
+const countEl = document.getElementById('count');
+const deltaEl = document.getElementById('delta');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let shown = 0, current = -1, raf = 0;
+
+function animateCount(to, ms) {
+  cancelAnimationFrame(raf);
+  const from = shown, t0 = performance.now();
+  if (reduced) { shown = to; countEl.textContent = fmt(to); return; }
+  const tick = (now) => {
+    const p = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - p, 3);
+    shown = Math.round(from + (to - from) * e);
+    countEl.textContent = fmt(shown);
+    if (p < 1) raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+}
+
+function show(stage) {
+  const prev = current >= 0 ? visibleAt(current) : new Array(days).fill(0);
+  const now = visibleAt(stage);
+  const growing = stage > current;
+  current = stage;
+  // Light cells in a sweep from January to today, ringing the ones this stage added to.
+  cells.forEach((c, i) => {
+    const delay = reduced ? 0 : Math.floor(i / 7) * 18;
+    setTimeout(() => {
+      c.style.backgroundColor = `var(--l${level(now[i])})`;
+      c.classList.toggle('lit', growing && stage > 0 && now[i] > prev[i]);
+    }, delay);
+  });
+  animateCount(totals[stage], stage === 0 ? 900 : 1400);
+  document.getElementById('caption').textContent = STAGES[stage].caption;
+  const extra = totals[stage] - totals[0];
+  deltaEl.textContent = stage === 0 ? '' : `+${fmt(extra)} GitHub doesn't show (+${Math.round((extra / totals[0]) * 100)}%)`;
+  deltaEl.classList.toggle('on', stage > 0);
+  [...stepsEl.children].forEach((b, s) => { if (s < STAGES.length) b.setAttribute('aria-pressed', String(s === stage)); });
+  [...legend.children].forEach((el, l) => el.classList.toggle('on', l < STAGES[stage].layers));
+}
+
+let timers = [];
+function stopAuto() { timers.forEach(clearTimeout); timers = []; }
+function runReveal() {
+  stopAuto(); current = -1;
+  cells.forEach((c) => { c.style.backgroundColor = ''; c.classList.remove('lit'); });
+  shown = 0; show(0);
+  timers.push(setTimeout(() => show(1), 2600));
+  timers.push(setTimeout(() => show(2), 5400));
+}
+
+// Start when the card scrolls into view (the way it would sit on a real page).
+new IntersectionObserver((entries, obs) => {
+  if (entries.some((e) => e.isIntersecting)) { obs.disconnect(); runReveal(); }
+}, { threshold: 0.4 }).observe(document.querySelector('.card'));
+
+// Hover tooltip: the per-day breakdown, which is the part only this tool can explain.
+const tip = document.getElementById('tip');
+grid.addEventListener('pointermove', (e) => {
+  const c = e.target.closest('.cell:not(.pad)');
+  if (!c) { tip.classList.remove('on'); return; }
+  const i = Number(c.dataset.i);
+  const d = new Date(startDate.getTime() + i * 86400000);
+  const date = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const main = DATA.layers[0].cells[i];
+  const others = DATA.layers.slice(1, -1).reduce((a, l) => a + l.cells[i], 0);
+  const hidden = DATA.layers[DATA.layers.length - 1].cells[i];
+  tip.innerHTML = `<strong>${date}: ${fmt(DATA.true[i])} total</strong>` +
+    `GitHub profile: ${fmt(main)}<br>Other accounts: ${fmt(others)}<br>Never counted by GitHub: ${fmt(hidden)}`;
+  tip.style.left = Math.min(innerWidth - 220, e.clientX + 14) + 'px';
+  tip.style.top = (e.clientY + 14) + 'px';
+  tip.classList.add('on');
+});
+grid.addEventListener('pointerleave', () => tip.classList.remove('on'));
+</script>
+</body>
+</html>

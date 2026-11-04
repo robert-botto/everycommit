@@ -1,0 +1,4 @@
+.local/
+node_modules/
+activity.json
+activity.svg

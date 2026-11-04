@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>everycommit demo</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 3rem 1rem; background: #e9eae6; font-family: system-ui, sans-serif; }
+  @media (prefers-color-scheme: dark) { body { background: #16181b; } }
+  every-commit { width: min(100%, 64rem); }
+</style>
+<script type="module" src="../widget/every-commit.js"></script>
+</head>
+<body>
+<!-- Serve the repository root (for example `npx serve .`) and open /docs/demo.html?src=/path/to/activity.json -->
+<every-commit id="graph"></every-commit>
+<script type="module">
+  const src = new URLSearchParams(location.search).get('src') ?? '../activity.json';
+  document.getElementById('graph').setAttribute('src', src);
+</script>
+</body>
+</html>

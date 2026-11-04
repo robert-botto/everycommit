@@ -1,0 +1,108 @@
+# The official everycommit workflow. Call it from your own public repository (see
+# examples/caller.yml). It is what makes a graph verifiable:
+#
+# 1. It runs the everycommit code from this exact workflow version, not code from the caller's
+#    repository, so a modified copy cannot produce output that passes `everycommit verify`.
+# 2. It signs activity.json with a GitHub artifact attestation. The signing certificate names this
+#    file at this version as the signer, which is what `--signer-workflow` checks.
+#
+# Signing needs a public caller repository (GitHub stores attestations for private repositories
+# only on Enterprise Cloud). activity.json holds per-day counts only: no repository names, no
+# logins, no email addresses, no code.
+
+name: everycommit generate
+
+on:
+  workflow_call:
+    inputs:
+      config:
+        description: Path to everycommit.config.json in the caller repository
+        type: string
+        default: everycommit.config.json
+      pages:
+        description: Also upload the output as a GitHub Pages artifact (deploy it with actions/deploy-pages)
+        type: boolean
+        default: true
+    secrets:
+      EVERYCOMMIT_TOKEN_1:
+        required: true
+      EVERYCOMMIT_TOKEN_2:
+        required: false
+      EVERYCOMMIT_TOKEN_3:
+        required: false
+      EVERYCOMMIT_TOKEN_4:
+        required: false
+      EVERYCOMMIT_TOKEN_5:
+        required: false
+      EVERYCOMMIT_TOKEN_6:
+        required: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # to sign
+      attestations: write # to store the signature
+    steps:
+      - name: Check out the caller's config
+        uses: actions/checkout@v4
+        with:
+          path: caller
+          persist-credentials: false
+
+      # The workflow's own repository and commit come from the job's OIDC token claims
+      # (job_workflow_ref, job_workflow_sha), so the code that runs is always the code of the
+      # workflow version the caller pinned, never a copy the caller controls.
+      - name: Identify this workflow version
+        id: self
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const token = await core.getIDToken('everycommit');
+            const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+            core.setOutput('repository', claims.job_workflow_ref.split('/.github/')[0]);
+            core.setOutput('sha', claims.job_workflow_sha);
+
+      - name: Check out everycommit at that version
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.self.outputs.repository }}
+          ref: ${{ steps.self.outputs.sha }}
+          path: everycommit
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Collect
+        working-directory: caller
+        env:
+          EVERYCOMMIT_TOKEN_1: ${{ secrets.EVERYCOMMIT_TOKEN_1 }}
+          EVERYCOMMIT_TOKEN_2: ${{ secrets.EVERYCOMMIT_TOKEN_2 }}
+          EVERYCOMMIT_TOKEN_3: ${{ secrets.EVERYCOMMIT_TOKEN_3 }}
+          EVERYCOMMIT_TOKEN_4: ${{ secrets.EVERYCOMMIT_TOKEN_4 }}
+          EVERYCOMMIT_TOKEN_5: ${{ secrets.EVERYCOMMIT_TOKEN_5 }}
+          EVERYCOMMIT_TOKEN_6: ${{ secrets.EVERYCOMMIT_TOKEN_6 }}
+        run: |
+          mkdir -p ../out
+          node ../everycommit/bin/everycommit.js collect --config "${{ inputs.config }}" --out ../out/activity.json --svg ../out/activity.svg
+          cp ../everycommit/widget/every-commit.js ../out/
+
+      - name: Sign
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            out/activity.json
+            out/activity.svg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: everycommit
+          path: out
+
+      - if: inputs.pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
