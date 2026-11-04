@@ -73,16 +73,18 @@ class EveryCommit extends HTMLElement {
 
   render(doc) {
     const root = this.shadowRoot;
-    const proven = doc.series.githubCalendars.filter((c) => c.proven);
+    // Compare commits with commits: GitHub's per-account commit credit, not its calendar, which also
+    // counts issues, reviews and pull requests.
+    const proven = doc.series.githubCommits;
     const days = doc.series.verifiedCommits.length;
     const add = (lists) => Array.from({ length: days }, (_, i) => lists.reduce((total, cells) => total + cells[i], 0));
     this.stages = [
-      { name: 'What GitHub shows', cells: proven[0]?.cells ?? new Array(days).fill(0),
-        caption: 'What one GitHub profile shows a visitor.' },
+      { name: 'What GitHub credits', cells: proven[0]?.cells ?? new Array(days).fill(0),
+        caption: 'Commits GitHub credits to one profile.' },
       { name: 'Every account', cells: add(proven.map((c) => c.cells)),
-        caption: `Adding ${proven.length - 1} more account${proven.length === 2 ? '' : 's'}. GitHub never combines them.` },
-      { name: 'Every commit', cells: doc.series.verifiedCommits,
-        caption: 'Every verified commit: all branches, all accounts, deduplicated, faked commits filtered out.' },
+        caption: `Commits GitHub credits across ${proven.length} accounts. GitHub never combines them.` },
+      { name: 'Every commit', cells: doc.series.commits,
+        caption: 'Every branch, every account, deduplicated. Everything added beyond GitHub is verified and filtered for faked commits.' },
     ];
     if (proven.length < 2) this.stages.splice(1, 1);
     this.totals = this.stages.map((s) => sum(s.cells));
@@ -155,10 +157,9 @@ class EveryCommit extends HTMLElement {
     root.querySelector('.caption').textContent = this.stages[stage].caption;
     const delta = root.querySelector('.delta');
     const extra = this.totals[stage] - this.totals[0];
-    delta.textContent = stage === 0 || this.totals[0] === 0 ? '' : extra > 0
-      ? `+${fmt(extra)} GitHub doesn't show (+${Math.round((extra / this.totals[0]) * 100)}%)`
-      : `GitHub's own graph also counts issues, reviews and pull requests`;
-    delta.classList.toggle('on', stage > 0);
+    delta.textContent = stage === 0 || this.totals[0] === 0 || extra <= 0 ? ''
+      : `+${fmt(extra)} GitHub doesn't show (+${Math.round((extra / this.totals[0]) * 100)}%)`;
+    delta.classList.toggle('on', Boolean(delta.textContent));
     [...root.querySelectorAll('.steps button:not(.replay)')].forEach((b, s) => b.setAttribute('aria-pressed', String(s === stage)));
   }
 

@@ -22,6 +22,12 @@ function fakeGithub(viewerLogin) {
         { date: '2026-02-03', contributionCount: 1 },
       ] }] } } } };
     }
+    if (query.includes('commitContributionsByRepository')) {
+      const inFeb = vars.from.startsWith('2026-02');
+      return { user: { contributionsCollection: { commitContributionsByRepository: inFeb ? [{ contributions: { nodes: [
+        { occurredAt: '2026-02-02T08:00:00Z', commitCount: vars.login === 'alice' ? 1 : 0 },
+      ] } }] : [] } } };
+    }
     if (query.includes('repositories(')) {
       return { viewer: { repositories: page([{ nameWithOwner: 'acme/app', pushedAt: '2026-02-03T16:00:00Z', createdAt: '2026-01-10T00:00:00Z' }]) } };
     }
@@ -51,13 +57,18 @@ test('collect + aggregate: every branch, deduplicated across accounts, labels on
     tool: { name: 'everycommit', version: 'test' }, now: new Date('2026-02-05T00:00:00Z') });
   assert.deepEqual(doc.series.verifiedCommits, [0, 1, 2, 0]);
   assert.equal(doc.totals.verifiedCommits, 3);
+  assert.equal(doc.totals.githubCommitsMainProfile, 1);
+  assert.equal(doc.totals.githubCommitsAllProvenAccounts, 1);
+  assert.equal(doc.series.githubCommits[0].cells[1], 1);
   assert.equal(doc.totals.githubMainProfile, 2);
+  assert.deepEqual(doc.series.commits, [0, 1, 2, 0], 'never below GitHub credit, verified on top');
+  assert.equal(doc.totals.addedBeyondGithub, 2);
   assert.equal(doc.totals.githubAllProvenAccounts, 3);
   assert.equal(doc.totals.mergedPullRequests, 4);
   assert.deepEqual(checkConsistency(doc), []);
   const text = JSON.stringify(doc);
   assert.ok(!text.includes('acme') && !text.includes('alice'), 'no repository names or logins are published');
-  assert.match(renderSvg(doc), /3 verified commits/);
+  assert.match(renderSvg(doc), /3 commits/);
 });
 
 test('a token that belongs to someone else is refused', async () => {
@@ -80,6 +91,20 @@ test('consistency check catches a hand-edited total', async () => {
   const doc = aggregate({ collected, from: '2026-02-01', to: '2026-02-02', timeZone: 'UTC', policy: DEFAULT_POLICY, tool: {} });
   doc.totals.verifiedCommits = 9000;
   assert.match(checkConsistency(doc).join(), /does not match/);
+});
+
+test('the headline never goes below GitHub credit, and only verified commits add to it', () => {
+  const collected = { calendars: [], repoCount: 0, mergedPrs: 0, commits: [],
+    githubCommits: [{ label: 'Main', days: { '2026-02-01': 5 } }] };
+  const doc = aggregate({ collected, from: '2026-02-01', to: '2026-02-02', timeZone: 'UTC', policy: DEFAULT_POLICY, tool: {} });
+  assert.deepEqual(doc.series.commits, [5, 0]);
+  assert.equal(doc.totals.addedBeyondGithub, 0);
+  assert.deepEqual(checkConsistency(doc), []);
+});
+
+test('months splits a range into calendar months', async () => {
+  const { months } = await import('../src/collect.js');
+  assert.deepEqual(months('2026-01-15', '2026-03-02'), [['2026-01-15', '2026-01-31'], ['2026-02-01', '2026-02-28'], ['2026-03-01', '2026-03-02']]);
 });
 
 test('commits are dated in the configured time zone', () => {
