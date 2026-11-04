@@ -119,6 +119,7 @@ npx everycommit verify activity.json --repo <you>/activity
 }
 ```
 
+- `scanRepos: false` on an account proves you own it and uses the commits GitHub credits to it, without listing or reading its repositories. Useful for a work account whose employer restricts third-party tools.
 - `label` is what viewers see. Logins, repository names and emails are never published.
 - The first account with a token is the "main profile" the reveal starts from.
 - `from` defaults to January 1 of the current year, `to` to today, both in `timeZone`.

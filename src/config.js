@@ -13,7 +13,7 @@ export function loadConfig(path, env = process.env, today = new Date()) {
     if (!account.login) throw new Error(`accounts[${i}] needs a login`);
     const token = account.tokenEnv ? env[account.tokenEnv] : undefined;
     if (account.tokenEnv && !token) throw new Error(`accounts[${i}]: environment variable ${account.tokenEnv} is not set`);
-    return { login: account.login, label: account.label ?? `Account ${i + 1}`, token };
+    return { login: account.login, label: account.label ?? `Account ${i + 1}`, token, scanRepos: account.scanRepos !== false };
   });
   return {
     accounts,

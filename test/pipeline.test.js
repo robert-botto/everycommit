@@ -102,6 +102,20 @@ test('the headline never goes below GitHub credit, and only verified commits add
   assert.deepEqual(checkConsistency(doc), []);
 });
 
+test('scanRepos: false proves the account and uses GitHub credit without reading repositories', async () => {
+  const base = fakeGithub('alice');
+  const asked = [];
+  const graphql = async (query, vars) => { asked.push(query); return base(query, vars); };
+  const collected = await collect({
+    accounts: [{ login: 'alice', label: 'Work', graphql, listEmails: emails('alice@example.com'), scanRepos: false }],
+    from: '2026-02-01', to: '2026-02-04',
+  });
+  assert.equal(collected.repoCount, 0);
+  assert.equal(collected.commits.length, 0);
+  assert.ok(!asked.some((q) => q.includes('repositories(') || q.includes('refs(')), 'no repository queries');
+  assert.equal(collected.githubCommits[0].days['2026-02-02'], 1);
+});
+
 test('months splits a range into calendar months', async () => {
   const { months } = await import('../src/collect.js');
   assert.deepEqual(months('2026-01-15', '2026-03-02'), [['2026-01-15', '2026-01-31'], ['2026-02-01', '2026-02-28'], ['2026-03-01', '2026-03-02']]);

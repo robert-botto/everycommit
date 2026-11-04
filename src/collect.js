@@ -62,7 +62,10 @@ export async function collect({ accounts, from, to, selfReportedEmails = [], log
   const commits = new Map(); // oid -> { oid, repo, repoCreatedAt, authoredDate, committedDate, ..., kind }
   const seenRepos = new Set();
 
-  for (const account of proven) {
+  // An account with scanRepos: false (for example a work account whose employer restricts tools)
+  // is still proven and still contributes GitHub's own commit credit, but its repositories are
+  // never listed or read.
+  for (const account of proven.filter((a) => a.scanRepos !== false)) {
     const repos = [];
     for (let cursor = null, more = true; more; ) {
       const page = (await account.graphql(REPOS, { cursor })).viewer.repositories;
