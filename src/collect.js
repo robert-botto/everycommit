@@ -3,10 +3,10 @@
 import { BRANCH_COMMITS, CALENDAR, MERGED_PRS, MORE_COMMITS, REPOS, VIEWER } from './github.js';
 import { createIdentity } from './identity.js';
 
-// accounts: [{ label, login, graphql? }] where graphql is a client built from that account's own
-// token. An account with a client is "proven": the token's viewer must be that login, which is what
-// stops anyone from adding a stranger's account to their graph. An account without one is kept, but
-// only as self-reported.
+// accounts: [{ label, login, graphql?, listEmails? }] where graphql and listEmails are built from that
+// account's own token. An account with a token is "proven": the token's viewer must be that login,
+// which is what stops anyone from adding a stranger's account to their graph. An account without one
+// is kept, but only as self-reported.
 export async function collect({ accounts, from, to, selfReportedEmails = [], log = () => {} }) {
   const proven = [];
   for (const account of accounts) {
@@ -15,7 +15,15 @@ export async function collect({ accounts, from, to, selfReportedEmails = [], log
     if (viewer.login.toLowerCase() !== account.login.toLowerCase()) {
       throw new Error(`The token for "${account.label}" belongs to ${viewer.login}, not ${account.login}`);
     }
-    proven.push({ ...account, login: viewer.login });
+    if (!account.listEmails) throw new Error(`"${account.label}" needs listEmails to check verified emails`);
+    let emails;
+    try {
+      emails = await account.listEmails();
+    } catch (error) {
+      throw new Error(`"${account.label}": ${error.message}`);
+    }
+    const verifiedEmails = emails.filter((e) => e.verified).map((e) => e.email);
+    proven.push({ ...account, login: viewer.login, id: viewer.databaseId, verifiedEmails });
   }
   if (!proven.length) throw new Error('At least one account needs a token');
 
@@ -32,7 +40,7 @@ export async function collect({ accounts, from, to, selfReportedEmails = [], log
     calendars.push({ label: account.label, proven: Boolean(account.graphql), days });
   }
 
-  const classify = createIdentity({ provenLogins: proven.map((a) => a.login), selfReportedEmails });
+  const classify = createIdentity({ accounts: proven, selfReportedEmails });
   const since = `${from}T00:00:00Z`;
   const commits = new Map(); // oid -> { oid, repo, repoCreatedAt, authoredDate, committedDate, ..., kind }
   const seenRepos = new Set();

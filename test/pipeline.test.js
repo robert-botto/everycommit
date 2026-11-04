@@ -36,11 +36,13 @@ function fakeGithub(viewerLogin) {
   };
 }
 
+const emails = (...list) => async () => list.map((email) => ({ email, verified: true }));
+
 test('collect + aggregate: every branch, deduplicated across accounts, labels only', async () => {
   const collected = await collect({
     accounts: [
-      { login: 'alice', label: 'Main profile', graphql: fakeGithub('alice') },
-      { login: 'alice-work', label: 'Work', graphql: fakeGithub('alice-work') },
+      { login: 'alice', label: 'Main profile', graphql: fakeGithub('alice'), listEmails: emails('alice@example.com') },
+      { login: 'alice-work', label: 'Work', graphql: fakeGithub('alice-work'), listEmails: emails('alice-work@example.com') },
     ],
     from: '2026-02-01', to: '2026-02-04',
   });
@@ -60,8 +62,16 @@ test('collect + aggregate: every branch, deduplicated across accounts, labels on
 
 test('a token that belongs to someone else is refused', async () => {
   await assert.rejects(
-    collect({ accounts: [{ login: 'torvalds', label: 'Borrowed', graphql: fakeGithub('alice') }], from: '2026-02-01', to: '2026-02-04' }),
+    collect({ accounts: [{ login: 'torvalds', label: 'Borrowed', graphql: fakeGithub('alice'), listEmails: emails() }], from: '2026-02-01', to: '2026-02-04' }),
     /belongs to alice, not torvalds/,
+  );
+});
+
+test('an account whose token cannot read its emails fails loudly instead of counting less', async () => {
+  const listEmails = async () => { throw new Error('this token cannot read its account email addresses'); };
+  await assert.rejects(
+    collect({ accounts: [{ login: 'alice', label: 'Main', graphql: fakeGithub('alice'), listEmails }], from: '2026-02-01', to: '2026-02-04' }),
+    /"Main": this token cannot read/,
   );
 });
 
