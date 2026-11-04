@@ -1,12 +1,40 @@
+<div align="center">
+
 # everycommit
 
-**Every commit. Every account. Verified.**
+### Every commit. Every account. Verified.
+
+**One honest contribution graph across all your GitHub accounts: every branch, deduplicated, filtered for faked commits, and signed.**
+
+[![MIT license](https://img.shields.io/badge/license-MIT-f4c430?style=flat-square)](LICENSE)
+[![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)](#quick-start-local)
+[![Zero dependencies](https://img.shields.io/badge/dependencies-0-2f5bff?style=flat-square)](package.json)
+[![Status: pre-release](https://img.shields.io/badge/status-pre--release-c58a00?style=flat-square)](#signing)
+
+[Quick start](#quick-start-local) · [How it stays honest](#how-it-stays-honest) · [Publish a signed graph](#publish-a-signed-graph) · [Config](#config) · [Output](#output) · [Signing](#signing)
+
+<code>npx everycommit init</code>
+
+</div>
+
+> [!IMPORTANT]
+> everycommit is a private pre-release. It is not on npm yet, so run it from a clone with
+> `node bin/everycommit.js` in place of `npx everycommit`. Signing goes live when the repository is public
+> (see [Signing](#signing)).
+
+<div align="center">
+
+<br />
+
+<img src="docs/assets/reveal.gif" alt="The Reveal: the count starts at what one GitHub profile shows, adds every account, then every verified commit" width="880" />
+
+<br /><br />
+
+</div>
 
 GitHub's contribution graph shows one account, counts only commits that land on the default branch, and collapses a squash-merged pull request into a single commit. If you work across a personal account, a work account and a side-project account, most of what you ship is invisible.
 
 everycommit reads every branch of every repository your accounts can see, deduplicates commits by SHA across accounts, filters out faked commits, and publishes one signed graph you can embed anywhere.
-
-> Status: private, pre-release. Signing needs this repository to be public (see [Signing](#signing)).
 
 ## What makes it different
 
@@ -48,6 +76,8 @@ Requires Node 22+ and, for the easiest setup, the [GitHub CLI](https://cli.githu
 npx everycommit init                                  # writes everycommit.config.json from your gh logins
 npx everycommit collect --use-gh-cli --svg activity.svg
 ```
+
+Until the npm release, clone this repository and use `node bin/everycommit.js` in place of `npx everycommit`.
 
 ## Publish a signed graph
 
