@@ -1,0 +1,23 @@
+{
+  "name": "everycommit",
+  "version": "0.1.0",
+  "description": "Every commit, every account, verified. A true, signed contribution graph across multiple GitHub accounts.",
+  "type": "module",
+  "bin": {
+    "everycommit": "bin/everycommit.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "widget"
+  ],
+  "scripts": {
+    "test": "node --test 'test/*.test.js'",
+    "check": "node scripts/check-no-em-dash.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "private": true
+}

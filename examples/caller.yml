@@ -1,0 +1,40 @@
+# Copy to .github/workflows/everycommit.yml in a PUBLIC repository of yours (for example
+# <you>/activity). Add one repository secret per account: EVERYCOMMIT_TOKEN_1, _2, ...
+# Each must be a fine-grained token created BY that account, read-only:
+#   Repository access: All repositories
+#   Repository permissions: Contents (read), Metadata (read), Pull requests (read)
+# Then enable Pages (Settings > Pages > Source: GitHub Actions).
+#
+# Your graph is published at https://<you>.github.io/<repo>/activity.json and can be embedded with:
+#   <script type="module" src="https://<you>.github.io/<repo>/every-commit.js"></script>
+#   <every-commit src="https://<you>.github.io/<repo>/activity.json" attestation-repo="<you>/<repo>"></every-commit>
+
+name: everycommit
+
+on:
+  schedule:
+    - cron: '17 4 * * *' # nightly
+  workflow_dispatch:
+
+jobs:
+  generate:
+    # Pin a released version. The pin is what `everycommit verify` trusts.
+    uses: robert-botto/everycommit/.github/workflows/generate.yml@v0.1.0
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    secrets: inherit
+
+  publish:
+    needs: generate
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
