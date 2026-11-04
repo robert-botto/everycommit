@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "test": "node --test 'test/*.test.js'",
-    "check": "node scripts/check-no-em-dash.mjs"
+    "check": "node --check widget/every-commit.js && node scripts/check-no-em-dash.mjs"
   },
   "engines": {
     "node": ">=22"

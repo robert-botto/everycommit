@@ -32,7 +32,7 @@ button.replay { margin-left: auto; }
 .seal { display: inline-flex; align-items: center; gap: .4rem; border: 1px dashed currentColor; border-radius: 999px; padding: .25rem .65rem; color: inherit; text-decoration: none; }
 .seal i { width: .5rem; height: .5rem; border-radius: 50%; background: #c58a00; }
 .seal b { font-weight: 600; color: var(--ec-text); }
-.seal .sig::before { content: '\00b7'; margin-right: .4rem; }
+.seal .sig::before { content: '\\00b7'; margin-right: .4rem; }
 .seal.signed { border-style: solid; color: var(--ec-text); }
 .seal.signed i { background: #1f9d55; }
 .tip { position: fixed; pointer-events: none; background: var(--ec-text); color: var(--ec-bg); font-size: .78rem; padding: .5rem .65rem;
