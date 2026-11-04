@@ -7,7 +7,7 @@ import { parseArgs } from 'node:util';
 import { aggregate, checkConsistency } from '../src/aggregate.js';
 import { collect } from '../src/collect.js';
 import { loadConfig } from '../src/config.js';
-import { createClient } from '../src/github.js';
+import { createClient, fetchEmails } from '../src/github.js';
 import { renderSvg } from '../src/svg.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
@@ -57,7 +57,11 @@ async function runCollect(args) {
     }
   }
   const config = loadConfig(values.config, env);
-  const accounts = config.accounts.map((a) => ({ ...a, graphql: a.token ? createClient(a.token) : undefined }));
+  const accounts = config.accounts.map((a) => ({
+    ...a,
+    graphql: a.token ? createClient(a.token) : undefined,
+    listEmails: a.token ? () => fetchEmails(a.token) : undefined,
+  }));
   const started = Date.now();
   const collected = await collect({
     accounts, from: config.from, to: config.to, selfReportedEmails: config.selfReportedEmails,

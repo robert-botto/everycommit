@@ -34,6 +34,21 @@ export function createClient(token, { fetchImpl = fetch, retries = 2, timeoutMs 
 
 export const VIEWER = `query { viewer { login databaseId } }`;
 
+// The account's own email list, with GitHub's verified flag. Needs the classic scope user:email, or
+// the fine-grained account permission "Email addresses: read".
+export async function fetchEmails(token, { fetchImpl = fetch } = {}) {
+  const response = await fetchImpl('https://api.github.com/user/emails?per_page=100', {
+    headers: { Authorization: `bearer ${token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'everycommit' },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (response.status === 401 || response.status === 403 || response.status === 404) {
+    throw new Error('this token cannot read its account email addresses. Grant the user:email scope ' +
+      '(gh auth refresh -s user:email) or, for a fine-grained token, the account permission "Email addresses: read"');
+  }
+  if (!response.ok) throw new Error(`GitHub returned HTTP ${response.status} for /user/emails`);
+  return (await response.json()).map(({ email, verified }) => ({ email, verified }));
+}
+
 export const CALENDAR = `query($login: String!, $from: DateTime!, $to: DateTime!) {
   user(login: $login) { contributionsCollection(from: $from, to: $to) {
     contributionCalendar { weeks { contributionDays { date contributionCount } } } } } }`;

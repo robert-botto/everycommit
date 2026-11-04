@@ -3,6 +3,7 @@
 # Each must be a fine-grained token created BY that account, read-only:
 #   Repository access: All repositories
 #   Repository permissions: Contents (read), Metadata (read), Pull requests (read)
+#   Account permissions: Email addresses (read)
 # Then enable Pages (Settings > Pages > Source: GitHub Actions).
 #
 # Your graph is published at https://<you>.github.io/<repo>/activity.json and can be embedded with:

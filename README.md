@@ -27,7 +27,7 @@ A graph is only worth showing if nobody can fake it. These rules are built in, a
 |---|---|
 | Edit `activity.json` by hand | The file is signed by the official workflow. `everycommit verify` checks the signature and that the signer was this workflow at a pinned version, and recomputes every total from the daily series. |
 | Run a modified copy of the tool | The official workflow runs its own code at its own commit, taken from the job's OIDC claims, never code from your repository. A modified fork signs as a different workflow and fails verification. |
-| Claim someone else's commits | A commit counts only when GitHub itself linked its author to an account you proved with that account's own token. GitHub links an email only when it is verified on the account. |
+| Claim someone else's commits | A commit counts only when GitHub linked its author to an account you proved with that account's own token **and** its email is verified on that account (or is the account's own noreply address). GitHub links commits to an email that was merely added, without proof of the mailbox, so the verified check is what stops someone adding a stranger's email and forking their repository. |
 | Add a stranger's account | Each account's token must belong to that account. A login without a token is only ever self-reported. |
 | Graph-painting scripts and backdated commits | Excluded and counted: empty commits, commits made before their repository existed, bursts of more than 20 commits a minute in one repository, future-dated commits. Merge commits are excluded because they repeat work already counted. |
 | Use everycommit to generate commits | It never writes to any repository. It needs read-only tokens only. |
@@ -36,13 +36,13 @@ What signing cannot prove: that the work was good. A determined person can still
 
 ### Verified versus self-reported
 
-- **Verified commits**: linked by GitHub to an account you proved, passed every filter. This is the headline number.
+- **Verified commits**: linked by GitHub to an account you proved, under an email verified on that account, and passed every filter. This is the headline number.
 - **GitHub calendars**: GitHub's own per-account numbers, shown in the reveal so viewers can compare. They include issues, reviews and pull requests, and they are not filtered.
-- **Self-reported**: commits under an email GitHub does not link to your account, and any frozen record you supply (for example commits that were never pushed). Shown separately, never added to the verified total.
+- **Self-reported**: commits under an email GitHub does not link to your account or that the account has not verified, and any frozen record you supply (for example commits that were never pushed). Shown separately, never added to the verified total. To move commits into verified, add their email to the right GitHub account and verify it.
 
 ## Quick start (local)
 
-Requires Node 22+ and, for the easiest setup, the [GitHub CLI](https://cli.github.com) logged in to each account (`gh auth login`).
+Requires Node 22+ and, for the easiest setup, the [GitHub CLI](https://cli.github.com) logged in to each account (`gh auth login`), with the `user:email` scope so everycommit can see which emails each account has verified (`gh auth refresh -s user:email`).
 
 ```sh
 npx everycommit init                                  # writes everycommit.config.json from your gh logins
@@ -53,7 +53,7 @@ npx everycommit collect --use-gh-cli --svg activity.svg
 
 1. Create a **public** repository, for example `<you>/activity`. It only ever holds per-day counts.
 2. Add `everycommit.config.json` (below) and copy [`examples/caller.yml`](examples/caller.yml) to `.github/workflows/everycommit.yml`.
-3. For each account, create a fine-grained token **while logged in as that account**: all repositories, read-only Contents, Metadata and Pull requests. Save them as repository secrets `EVERYCOMMIT_TOKEN_1`, `EVERYCOMMIT_TOKEN_2`, ...
+3. For each account, create a fine-grained token **while logged in as that account**: all repositories, read-only Contents, Metadata and Pull requests, plus the account permission Email addresses (read). Save them as repository secrets `EVERYCOMMIT_TOKEN_1`, `EVERYCOMMIT_TOKEN_2`, ...
 4. Enable Pages (Settings, Pages, Source: GitHub Actions) and run the workflow.
 
 Embed it:
