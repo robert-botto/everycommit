@@ -77,7 +77,7 @@ async function runCollect(args) {
   const t = doc.totals;
   console.log(`${t.verifiedCommits} verified commits across ${t.activeDays} days from ${t.repositoriesRead} repositories ` +
     `(${Math.round((Date.now() - started) / 1000)}s)`);
-  console.log(`GitHub shows ${t.githubMainProfile} on the main profile, ${t.githubAllProvenAccounts} across proven accounts`);
+  console.log(`GitHub shows ${t.githubMainProfile} on the main profile, ${t.githubAllProvenAccounts} across proven accounts; headline ${t.contributions} (+${t.addedBeyondGithub})`);
   console.log(`self-reported ${t.selfReportedCommits}; excluded ${JSON.stringify(doc.excluded)}`);
   console.log(`wrote ${values.out}${values.svg ? ` and ${values.svg}` : ''}`);
 }

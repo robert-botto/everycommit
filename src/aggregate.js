@@ -65,6 +65,15 @@ export function aggregate({ collected, from, to, timeZone, policy, tool, now = n
     cells: dates.map((date) => days[date] ?? 0),
   }));
 
+  // The headline series. Per day, the higher of what GitHub's calendars show across your proven
+  // accounts and what everycommit verified. It never shows less than GitHub, and everything it adds
+  // on top is verified commits that passed every filter. It is called contributions, not commits,
+  // because GitHub's calendars also count pull requests, reviews and issues. (GitHub's per-type
+  // commit counts can't be used instead: it reports most private work only as an undated total.)
+  const provenCells = calendars.filter((c) => c.proven);
+  const githubAll = dates.map((_, i) => provenCells.reduce((total, c) => total + c.cells[i], 0));
+  const contributions = dates.map((_, i) => Math.max(githubAll[i], verified[i]));
+
   const sum = (cells) => cells.reduce((a, b) => a + b, 0);
   const provenCalendars = calendars.filter((c) => c.proven);
   return {
@@ -76,18 +85,21 @@ export function aggregate({ collected, from, to, timeZone, policy, tool, now = n
     to,
     policy,
     series: {
+      contributions,
       verifiedCommits: verified,
       selfReportedCommits: selfReported,
       githubCalendars: calendars,
     },
     totals: {
+      contributions: sum(contributions),
+      addedBeyondGithub: sum(contributions) - sum(githubAll),
       verifiedCommits: sum(verified),
       selfReportedCommits: sum(selfReported),
       githubMainProfile: provenCalendars.length ? sum(provenCalendars[0].cells) : 0,
       githubAllProvenAccounts: sum(provenCalendars.flatMap((c) => c.cells)),
       mergedPullRequests: collected.mergedPrs,
-      activeDays: verified.filter((n) => n > 0).length,
-      busiestDay: Math.max(0, ...verified),
+      activeDays: contributions.filter((n) => n > 0).length,
+      busiestDay: Math.max(0, ...contributions),
       repositoriesRead: collected.repoCount,
     },
     excluded,
@@ -109,6 +121,11 @@ export function checkConsistency(doc) {
   }
   const proven = series.githubCalendars.filter((c) => c.proven);
   if (sum(proven.flatMap((c) => c.cells)) !== totals.githubAllProvenAccounts) problems.push('GitHub calendar total does not match its series');
-  if (totals.activeDays !== series.verifiedCommits.filter((n) => n > 0).length) problems.push('activeDays does not match');
+  const githubAll = series.verifiedCommits.map((_, i) => proven.reduce((total, c) => total + c.cells[i], 0));
+  if (series.contributions.some((n, i) => n !== Math.max(githubAll[i], series.verifiedCommits[i]))) {
+    problems.push('contributions is not the per-day higher of the GitHub calendars and verified commits');
+  }
+  if (sum(series.contributions) !== totals.contributions) problems.push('contributions total does not match its series');
+  if (totals.activeDays !== series.contributions.filter((n) => n > 0).length) problems.push('activeDays does not match');
   return problems;
 }

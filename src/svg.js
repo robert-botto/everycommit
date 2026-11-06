@@ -17,7 +17,7 @@ const escape = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': 
 
 export function renderSvg(doc, { theme = 'light' } = {}) {
   const colors = PALETTE[theme] ?? PALETTE.light;
-  const cells = doc.series.verifiedCommits;
+  const cells = doc.series.contributions;
   const level = levels(cells);
   const size = 11, gap = 3, left = 20, top = 70;
   const pad = new Date(`${doc.from}T12:00:00Z`).getUTCDay();
@@ -31,8 +31,8 @@ export function renderSvg(doc, { theme = 'light' } = {}) {
     return `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="2" fill="${colors.levels[level(n)]}"><title>${doc.from && dayLabel(doc.from, i)}: ${n}</title></rect>`;
   }).join('');
   const t = doc.totals;
-  const title = `${fmt(t.verifiedCommits)} verified commits`;
-  const sub = `${fmt(t.activeDays)} active days · ${fmt(t.mergedPullRequests)} merged pull requests · ${doc.from} to ${doc.to}`;
+  const title = `${fmt(t.contributions)} contributions`;
+  const sub = `${fmt(t.addedBeyondGithub)} more than GitHub shows · ${fmt(t.activeDays)} active days · ${fmt(t.mergedPullRequests)} merged pull requests · ${doc.from} to ${doc.to}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escape(title)}">
 <rect width="100%" height="100%" rx="10" fill="${colors.bg}"/>
 <text x="${left}" y="36" font-family="system-ui, sans-serif" font-size="22" font-weight="800" fill="${colors.text}">${escape(title)}</text>

@@ -52,12 +52,15 @@ test('collect + aggregate: every branch, deduplicated across accounts, labels on
   assert.deepEqual(doc.series.verifiedCommits, [0, 1, 2, 0]);
   assert.equal(doc.totals.verifiedCommits, 3);
   assert.equal(doc.totals.githubMainProfile, 2);
+  // Calendars: alice [0,1,1,0], alice-work [0,0,1,0] -> GitHub [0,1,2,0]; verified [0,1,2,0].
+  assert.deepEqual(doc.series.contributions, [0, 1, 2, 0], 'never below GitHub, verified on top');
+  assert.equal(doc.totals.addedBeyondGithub, 0);
   assert.equal(doc.totals.githubAllProvenAccounts, 3);
   assert.equal(doc.totals.mergedPullRequests, 4);
   assert.deepEqual(checkConsistency(doc), []);
   const text = JSON.stringify(doc);
   assert.ok(!text.includes('acme') && !text.includes('alice'), 'no repository names or logins are published');
-  assert.match(renderSvg(doc), /3 verified commits/);
+  assert.match(renderSvg(doc), /3 contributions/);
 });
 
 test('a token that belongs to someone else is refused', async () => {
@@ -80,6 +83,19 @@ test('consistency check catches a hand-edited total', async () => {
   const doc = aggregate({ collected, from: '2026-02-01', to: '2026-02-02', timeZone: 'UTC', policy: DEFAULT_POLICY, tool: {} });
   doc.totals.verifiedCommits = 9000;
   assert.match(checkConsistency(doc).join(), /does not match/);
+});
+
+test('the headline never goes below GitHub, and only verified commits add to it', () => {
+  const verifiedCommit = (oid, day) => ({ oid, kind: 'verified', authoredDate: `${day}T12:00:00Z`, committedDate: `${day}T12:00:00Z`,
+    additions: 1, deletions: 0, changedFilesIfAvailable: 1, parents: { totalCount: 1 }, repo: 'r', repoCreatedAt: '2026-01-01T00:00:00Z' });
+  const collected = { repoCount: 1, mergedPrs: 0,
+    calendars: [{ label: 'Main', proven: true, days: { '2026-02-01': 5 } }, { label: 'Stranger', proven: false, days: { '2026-02-02': 9 } }],
+    commits: [verifiedCommit('a', '2026-02-02'), verifiedCommit('b', '2026-02-02')] };
+  const doc = aggregate({ collected, from: '2026-02-01', to: '2026-02-02', timeZone: 'UTC', policy: DEFAULT_POLICY, tool: {},
+    now: new Date('2026-02-03T00:00:00Z') });
+  assert.deepEqual(doc.series.contributions, [5, 2], 'an unproven calendar adds nothing');
+  assert.equal(doc.totals.addedBeyondGithub, 2);
+  assert.deepEqual(checkConsistency(doc), []);
 });
 
 test('commits are dated in the configured time zone', () => {

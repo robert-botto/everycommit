@@ -16,7 +16,20 @@
 <every-commit id="graph"></every-commit>
 <script type="module">
   const src = new URLSearchParams(location.search).get('src') ?? '../activity.json';
-  document.getElementById('graph').setAttribute('src', src);
+  const graph = document.getElementById('graph');
+  graph.setAttribute('src', src);
+  // ?preview=signed shows the badge as it looks on a signed graph, for recording the README demo.
+  // It lives only in this docs page, never in the widget, so no embed can switch the badge on.
+  if (new URLSearchParams(location.search).get('preview') === 'signed') {
+    const timer = setInterval(() => {
+      const seal = graph.shadowRoot?.querySelector('.seal');
+      if (!seal) return;
+      clearInterval(timer);
+      seal.classList.add('signed');
+      seal.querySelector('b').textContent = '\u2713 Verified';
+      seal.querySelector('.sig').textContent = 'Signed';
+    }, 50);
+  }
 </script>
 </body>
 </html>
