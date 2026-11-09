@@ -9,18 +9,14 @@
 [![MIT license](https://img.shields.io/badge/license-MIT-f4c430?style=flat-square)](LICENSE)
 [![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)](#quick-start-local)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-2f5bff?style=flat-square)](package.json)
-[![Status: pre-release](https://img.shields.io/badge/status-pre--release-c58a00?style=flat-square)](#signing)
+[![npm](https://img.shields.io/npm/v/everycommit?style=flat-square&color=cb3837)](https://www.npmjs.com/package/everycommit)
+[![CI](https://img.shields.io/github/actions/workflow/status/robert-botto/everycommit/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/robert-botto/everycommit/actions/workflows/ci.yml)
 
 [Quick start](#quick-start-local) · [How it stays honest](#how-it-stays-honest) · [Publish a signed graph](#publish-a-signed-graph) · [Config](#config) · [Output](#output) · [Signing](#signing)
 
 <code>npx everycommit init</code>
 
 </div>
-
-> [!IMPORTANT]
-> everycommit is a private pre-release. It is not on npm yet, so run it from a clone with
-> `node bin/everycommit.js` in place of `npx everycommit`. Signing goes live when the repository is public
-> (see [Signing](#signing)).
 
 <div align="center">
 
@@ -78,8 +74,6 @@ npx everycommit init                                  # writes everycommit.confi
 npx everycommit collect --use-gh-cli --svg activity.svg
 ```
 
-Until the npm release, clone this repository and use `node bin/everycommit.js` in place of `npx everycommit`.
-
 ## Publish a signed graph
 
 1. Create a **public** repository, for example `<you>/activity`. It only ever holds per-day counts.
@@ -130,14 +124,16 @@ npx everycommit verify activity.json --repo <you>/activity
 
 ## Signing
 
-Signing uses [GitHub artifact attestations](https://docs.github.com/en/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds). GitHub stores attestations for private repositories only on Enterprise Cloud, so the publishing repository must be public. For the same reason, other people can only call the official workflow once this repository is public, and the signing path has not been run end to end yet.
+Signing uses [GitHub artifact attestations](https://docs.github.com/en/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds). GitHub stores attestations for private repositories only on Enterprise Cloud, so the publishing repository must be public. Check any published graph yourself with `npx everycommit verify activity.json --repo <owner>/<repo>`, which recomputes every total and then runs `gh attestation verify` against the official workflow.
 
 ## Development
 
 ```sh
 npm test        # unit and pipeline tests, no network
-npm run check   # no em dashes anywhere
+npm run check   # widget syntax, no em dashes anywhere
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Found a way to fake a graph? Please report it privately, see [SECURITY.md](SECURITY.md).
 
 `docs/the-reveal.html` is the original design prototype.
 

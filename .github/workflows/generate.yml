@@ -46,7 +46,7 @@ jobs:
       attestations: write # to store the signature
     steps:
       - name: Check out the caller's config
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           path: caller
           persist-credentials: false
@@ -56,7 +56,7 @@ jobs:
       # workflow version the caller pinned, never a copy the caller controls.
       - name: Identify this workflow version
         id: self
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const token = await core.getIDToken('everycommit');
@@ -65,14 +65,14 @@ jobs:
             core.setOutput('sha', claims.job_workflow_sha);
 
       - name: Check out everycommit at that version
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: ${{ steps.self.outputs.repository }}
           ref: ${{ steps.self.outputs.sha }}
           path: everycommit
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
 
@@ -91,18 +91,18 @@ jobs:
           cp ../everycommit/widget/every-commit.js ../out/
 
       - name: Sign
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: |
             out/activity.json
             out/activity.svg
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: everycommit
           path: out
 
       - if: inputs.pages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: out
