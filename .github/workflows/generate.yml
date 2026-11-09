@@ -46,7 +46,7 @@ jobs:
       attestations: write # to store the signature
     steps:
       - name: Check out the caller's config
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: caller
           persist-credentials: false
@@ -65,7 +65,7 @@ jobs:
             core.setOutput('sha', claims.job_workflow_sha);
 
       - name: Check out everycommit at that version
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ steps.self.outputs.repository }}
           ref: ${{ steps.self.outputs.sha }}
