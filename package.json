@@ -2,6 +2,25 @@
   "name": "everycommit",
   "version": "0.1.0",
   "description": "Every commit, every account, verified. A true, signed contribution graph across multiple GitHub accounts.",
+  "keywords": [
+    "github",
+    "contributions",
+    "contribution-graph",
+    "commits",
+    "multiple-accounts",
+    "attestation",
+    "provenance",
+    "web-component"
+  ],
+  "author": "Robert Botto (https://robertbotto.com)",
+  "homepage": "https://github.com/robert-botto/everycommit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robert-botto/everycommit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/robert-botto/everycommit/issues"
+  },
   "type": "module",
   "bin": {
     "everycommit": "bin/everycommit.js"
@@ -18,6 +37,5 @@
   "engines": {
     "node": ">=22"
   },
-  "license": "MIT",
-  "private": true
+  "license": "MIT"
 }

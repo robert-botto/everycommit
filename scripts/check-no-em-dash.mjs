@@ -2,7 +2,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
 
-const ROOTS = ['src', 'bin', 'widget', 'test', 'docs', '.github', 'README.md'];
+const ROOTS = ['src', 'bin', 'widget', 'test', 'docs', '.github', 'README.md', 'SECURITY.md', 'CONTRIBUTING.md', 'package.json'];
 const BINARY = new Set(['.png', '.jpg', '.jpeg', '.ico', '.webp', '.avif', '.gif', '.woff', '.woff2']);
 const EM_DASH = String.fromCharCode(0x2014);
 
